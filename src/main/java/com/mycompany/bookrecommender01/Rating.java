@@ -5,11 +5,13 @@
  */
 package com.mycompany.bookrecommender01;
 
+import java.io.Serializable;
+
 /**
  *
  * @author AbdrhmnAns
  */
-public class Rating {
+public class Rating implements Serializable {
     private int userId;
     private int recommendations;
     private int rate;

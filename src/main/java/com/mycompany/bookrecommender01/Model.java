@@ -25,15 +25,25 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Arrays;
 import java.util.regex.Pattern;
+import javassist.compiler.ast.Stmnt;
+import org.apache.spark.api.java.function.ForeachFunction;
+import java.io.Serializable;
+import java.util.Iterator;
+import org.apache.spark.api.java.function.ForeachPartitionFunction;
+
 /**
  *
  * @author AbdrhmnAns
  */
-public class Model {
+public class Model implements Serializable {
 
-    public static void main(String[] args) {
-                Model DB = new Model(); 
-        DB.createconnetion();
+    /**
+     *
+     * @param args
+     */
+    public static void main(String[] args)  {
+  
+ 
         SparkSession session = SparkSession.builder()
                 .appName("BookRecommender")
                 .master("local[*]")
@@ -104,12 +114,40 @@ public class Model {
        // System.out.println(" r show");
         //r.show();
         //r.coalesce(1).write().json("output");
-        //  r.write().json("jesondatasetalgoresult");
-       Dataset<Row> users = r.select(als.getUserCol()).distinct().limit(3);
-       users.show();
-       Dataset<Row> recs = r.select(als.getItemCol()).distinct().limit(3);
-       recs.show();
-       recs.toString();
+
+                 try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ratings","root","");
+            System.out.println("Conncted!!!");
+            
+              Dataset<Row> users = r.select(als.getUserCol()).distinct().limit(3);
+              users.show();
+             /* PreparedStatement stmnt = conn.prepareStatement("INSERT INTO recommendations VALUES(?)");
+              users.foreach((ForeachFunction<Row>) row -> stmnt.setString(1,row.toString()));
+              stmnt.execute();
+              stmnt.close();*/
+        PreparedStatement stmnt = conn.prepareStatement("INSERT INTO recommendations VALUES(?)");
+         users.foreachPartition(new ForeachPartitionFunction<Row>() {
+            @Override
+            public void call(Iterator<Row> t) throws Exception {
+                while (t.hasNext()){
+
+              Row row = t.next();
+              stmnt.setString(1,row.toString());
+              stmnt.execute();
+                          }
+            }
+        });
+          stmnt.close();  
+         //   Dataset<Row> recs = r.select(als.getItemCol()).distinct().limit(3);
+          //  recs.show();
+          //  System.out.println("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEERRRREEEE");
+           // recs.foreach((ForeachFunction<Row>) row -> System.out.println(row.toString()));
+
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(Model.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
 
         // evaluation crieteria for model
         RegressionEvaluator evaluator = new RegressionEvaluator()
@@ -119,11 +157,11 @@ public class Model {
         Double rmse = evaluator.evaluate(predictions);
         System.out.println("Root-mean-square error = " + rmse);
     }
-        void createconnetion() 
+      public  void createconnetion() 
     {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/larticles","root","");
+          Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ratings","root","");
             System.out.println("Conncted!!!");
              /*   Statement stmnt = conn.createStatement();
                 ResultSet rs = stmnt.executeQuery("SELECT title FROM articles");
@@ -133,6 +171,11 @@ public class Model {
                     System.out.println(title);
                            
                 }*/
+             
+   /* PreparedStatement stmnt = conn.prepareStatement("INSERT INTO recommendations VALUES(?)");
+    stmnt.setInt(1,2);
+                stmnt.execute();
+           stmnt.close();*/
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(Model.class.getName()).log(Level.SEVERE, null, ex);
         }
