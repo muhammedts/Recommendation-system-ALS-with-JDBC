@@ -11,9 +11,9 @@ import java.io.Serializable;
  *
  * @author AbdrhmnAns
  */
-public class Rating implements Serializable {
+public class Rating implements Serializable{
     private int userId;
-    private int recommendations;
+    private int ISBN;
     private int rate;
    
     
@@ -26,12 +26,12 @@ public class Rating implements Serializable {
         this.userId = userId;
     }
 
-    public int getrecommendations() {
-        return recommendations;
+    public int getISBN() {
+        return ISBN;
     }
 
-    public void setrecommendations(int recommendations) {
-        this.recommendations = recommendations;
+    public void setISBN(int ISBN) {
+        this.ISBN = ISBN;
     }
 
     public int getRate() {
