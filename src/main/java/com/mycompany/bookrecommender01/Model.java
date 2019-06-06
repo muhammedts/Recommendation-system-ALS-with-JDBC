@@ -47,9 +47,8 @@ public class Model implements Serializable {
                 .read().option("header", "true")
                 .csv("ratings.csv");
         dataset.show();*/
+
         // reading from database   
-   
-         
         Dataset<Row> dataset = session.
                 read()
                 .option("url", "jdbc:mysql://localhost:3306/ratings")
@@ -126,9 +125,7 @@ public class Model implements Serializable {
                  System.out.println(nuserId);
 
                 String reco1 =fields[1];
-               int nrec =Integer.parseInt(reco1.replaceAll("[\\[\\]]", "").replace("WrappedArray(", "").replaceAll("\"", "").replaceAll("\\s",""));
-                 System.out.println(nrec);
-               
+               int nrec =Integer.parseInt(reco1.replaceAll("[\\[\\]]", "").replace("WrappedArray(", "").replaceAll("\"", "").replaceAll("\\s",""));               
              
                 String reco2 =fields[3];
                int nrec2 =Integer.parseInt(reco2.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
