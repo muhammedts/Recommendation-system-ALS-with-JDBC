@@ -5,6 +5,7 @@
  */
 package com.mycompany.bookrecommender01;
 
+import java.io.NotSerializableException;
 import java.io.Serializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -25,16 +26,17 @@ import java.util.logging.Logger;
 import java.sql.Connection;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import org.apache.spark.api.java.function.ForeachFunction;
 
 /**
  *
- * @author AbdrhmnAns
+ * @author Muhammed Tarek
  */
 public class Model implements Serializable {
-
-    public static void main(String[] args) {
-        SparkSession session = SparkSession.builder()
+    public void Recommend(){
+       SparkSession session = SparkSession.builder()
                 .appName("BookRecommender")
                 .master("local[*]")
                 .config("spark.sql.warehouse.dir", "file:///D://")
@@ -46,6 +48,8 @@ public class Model implements Serializable {
                 .csv("ratings.csv");
         dataset.show();*/
         // reading from database   
+   
+         
         Dataset<Row> dataset = session.
                 read()
                 .option("url", "jdbc:mysql://localhost:3306/ratings")
@@ -95,7 +99,7 @@ public class Model implements Serializable {
         ALSModel model = als.fit(training);
         model.setColdStartStrategy("drop");
         Dataset<Row> predictions = model.transform(test);
-        Dataset<Row> r = model.recommendForAllUsers(2);
+        Dataset<Row> r = model.recommendForAllUsers(10);
         System.out.println(" r show");
         r.show();
         // r.coalesce(1).write().json("output1");
@@ -123,41 +127,69 @@ public class Model implements Serializable {
 
                 String reco1 =fields[1];
                int nrec =Integer.parseInt(reco1.replaceAll("[\\[\\]]", "").replace("WrappedArray(", "").replaceAll("\"", "").replaceAll("\\s",""));
-               System.out.println("HEREEEEEEEEEEE");
                  System.out.println(nrec);
                
              
                 String reco2 =fields[3];
                int nrec2 =Integer.parseInt(reco2.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
-                //System.out.println("userid "+fields[0]);
-                // System.err.println("ISBN "+fields[1]);
+                  
+               String reco3 =fields[5];
+               int nrec3 =Integer.parseInt(reco3.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+                   String reco4 =fields[7];
+               int nrec4 =Integer.parseInt(reco4.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+                   String reco5 =fields[9];
+               int nrec5 =Integer.parseInt(reco5.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+                   String reco6 =fields[11];
+               int nrec6 =Integer.parseInt(reco6.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+                   String reco7 =fields[13];
+               int nrec7 =Integer.parseInt(reco7.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+                   String reco8 =fields[15];
+               int nrec8 =Integer.parseInt(reco8.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+                   String reco9 =fields[17];
+               int nrec9 =Integer.parseInt(reco9.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+                   String reco10 =fields[19];
+               int nrec10 =Integer.parseInt(reco10.replaceAll("[\\[\\]]", "").replaceAll("\"", "").replaceAll("\\s",""));
+               
+               
+               
         Recommendations r = new Recommendations();
-        r.setuserId(nuserId);
+        r.setUserId(nuserId);
         r.setRecommendation1(nrec);
         r.setRecommendation2(nrec2);
-                return r;
-                // System.out.println("userid " + fields[2]);
-                /*String userId = fields[0];
-                int nuserId = Integer.parseInt(userId.replaceAll("[\\[\\]]", ""));
-                String ISBN = fields[1];
-                int nISBN = Integer.parseInt(ISBN.replaceAll("[\\[\\]]", ""));
-                String rate = fields[2];
-                int Ratee = Integer.parseInt(rate.replaceAll("[\\[\\]]", ""));
-                Rating r = new Rating();
-                r.setUserId(nuserId);
-                r.setRate(Ratee);
-                r.setISBN(nISBN);
-                return r;*/
-              
-                
+        r.setRecommendation3(nrec3);
+        r.setRecommendation4(nrec4);
+        r.setRecommendation5(nrec5);
+        r.setRecommendation6(nrec6);
+        r.setRecommendation7(nrec7);
+        r.setRecommendation8(nrec8);
+        r.setRecommendation9(nrec9);
+        r.setRecommendation10(nrec10);
+        return r;
             }
         });
         Dataset<Row> RecommendationDataset = session.createDataFrame(javaRDD1, Recommendations.class);
-        //  ratingDataset.write().json("E://cvbb");
         RecommendationDataset.show();
-               RecommendationDataset.write().jdbc("jdbc:mysql://localhost:3306/ratings", "alldata",b);
-
-        // evaluation crieteria for model
+        //deleting table
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+              Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ratings", "root", "");
+           System.out.println("Conncted!!!");
+          PreparedStatement stmnt = conn.prepareStatement("DROP TABLE Recommendations");
+           stmnt.execute();
+           stmnt.close();
+        
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(Model.class.getName()).log(Level.SEVERE, null, ex);
+        }
+               RecommendationDataset.write().jdbc("jdbc:mysql://localhost:3306/ratings", "Recommendations",b);
+     // evaluation crieteria for model
         RegressionEvaluator evaluator = new RegressionEvaluator()
                 .setMetricName("rmse")
                 .setLabelCol("rate")
@@ -165,6 +197,25 @@ public class Model implements Serializable {
         Double rmse = evaluator.evaluate(predictions);
         System.out.println("Root-mean-square error = " + rmse);
 
+    
+    }
+
+    public static void main(String[] args) throws NotSerializableException {
+                int delay = 5000; //msecs
+                Model obj =new Model();
+         Timer timer = new Timer();
+    timer.schedule(new TimerTask()
+    {
+        @Override
+        public void run()
+        {
+     obj.Recommend();
+        }
+    }, delay,900000); 
+
+     
+
+   
     }
 }
 
