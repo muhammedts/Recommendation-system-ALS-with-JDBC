@@ -1,0 +1,10 @@
+target/
+.idea/
+*.iml
+.vscode/
+nbactions.xml
+nb-configuration.xml
+.env
+spark-warehouse/
+metastore_db/
+derby.log
